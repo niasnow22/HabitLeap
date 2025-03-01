@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'account.dart';
 import 'main_menu.dart';
+import 'new_habit.dart';
+import 'habit_progress.dart';
 
 class HabitList extends StatefulWidget {
   @override
