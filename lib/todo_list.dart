@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'account.dart';
 import 'main_menu.dart';
+import 'new_todo.dart';
+import 'todo_progress.dart';
 
 class ToDoList extends StatefulWidget {
   @override
