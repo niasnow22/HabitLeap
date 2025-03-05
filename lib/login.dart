@@ -10,8 +10,8 @@ class Login extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           image: DecorationImage(
-            image: AssetImage("assets/background.png"), // Add image and update pubspec.yaml
-            fit: BoxFit.cover, // Fixed missing comma issue
+            image: AssetImage("assets/background.png"),
+            fit: BoxFit.cover,
           ),
         ),
         child: Column(
@@ -25,7 +25,7 @@ class Login extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Text(
-                "HabitLeap",
+                "Habit Leap",
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -106,24 +106,24 @@ class Login extends StatelessWidget {
             ),
             SizedBox(height: 20),
 
-            // Register Button will have to add another  file fot the extension
-           // SizedBox(
-             // width: 180,
-              //child: ElevatedButton(
-                //style: ElevatedButton.styleFrom(
-                  //backgroundColor: Colors.purple[300],
-                  //foregroundColor: Colors.black,
-                //),
-                //onPressed: () {
-                  // Navigate to Register Screen (update this if needed)
-                  //Navigator.push(
-                    //context,
-                    //MaterialPageRoute(builder: (context) => ()), // Change this to RegisterScreen if needed
-                  //);
-                //},
-                //child: Text("Register"),
-              //),
-            //),
+            // Register (Now a Non-Clickable Container)
+            Container(
+              width: 180,
+              padding: EdgeInsets.symmetric(vertical: 14),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.purple[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                "Register",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
           ],
         ),
       ),
