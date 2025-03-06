@@ -38,12 +38,8 @@ class _NewHabitState extends State<NewHabit> {
                 ),
               ),
               onPressed: () {
-                  //Save habit logic here
-                  Navigator.pushReplacement(
-                    context, 
-                    MaterialPageRoute(builder: (context) => HabitList()),
-                  );
-                },
+                Navigator.pop(context);
+},
               child: Text("Cancel"),
             ),
           )

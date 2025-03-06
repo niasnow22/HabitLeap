@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'splash.dart';
 
 void main() {
   runApp(HabitLeap());
@@ -11,7 +11,7 @@ class HabitLeap extends StatelessWidget {
     return MaterialApp(
       title: 'HabitLeap',
       debugShowCheckedModeBanner: false, // Hides debug banner
-      home: Login(), // Starts with MainMenu
+      home: SplashScreen(), // Starts with MainMenu
     );
   }
 }
