@@ -6,6 +6,8 @@ void main() {
 }
 
 class HabitLeap extends StatelessWidget {
+  const HabitLeap({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

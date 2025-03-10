@@ -1,21 +1,38 @@
 import 'package:flutter/material.dart';
-import 'todo_list.dart'; // Ensure this exists and is correctly linked.
+import 'database.dart';
+import 'todo_list.dart';
 
 class NewToDo extends StatefulWidget {
+  const NewToDo ({super.key});
+
   @override
   _NewToDoState createState() => _NewToDoState();
 }
 
 class _NewToDoState extends State<NewToDo> {
   final TextEditingController _descriptionController = TextEditingController();
-  String _selectedDate = "02/12";
-  String _selectedTime = "8:00 AM";
-  bool _isAllDay = false;
-  String _priority = "High";
+  String _selctedDate = '02/12';
+  final String _selectedTime = "8:00 AM";
+  final bool _isAllDay = false;
+  final String _priority = "High";
 
-  void _navigateBack() {
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => ToDoList()));
+  void _saveTask() async {
+    if (_descriptionController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please enter a task description")),
+      );
+      return;
+    }
+
+    final newTask = {
+      "description": _descriptionController.text,
+      "date": _selectedDate,
+      "time": _isAllDay ? "All Day" : _selectedTime,
+      "priority": _priority,
+    };
+
+    await DatabaseHelper.instance.insertTask(newTask);
+    Navigator.pop(context, newTask);
   }
 
   @override
@@ -29,7 +46,7 @@ class _NewToDoState extends State<NewToDo> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: OutlinedButton(
-              onPressed: _navigateBack,
+              onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: Colors.purple),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -40,118 +57,73 @@ class _NewToDoState extends State<NewToDo> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0)
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Description Input
             Text("Description", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             TextFormField(
               controller: _descriptionController,
               maxLines: 2,
               decoration: InputDecoration(
-                hintText: "ex: do my math homework, laundry",
+                hintText: "ex: do my math homweork, laundry",
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.purple, width: 2),
+                  borderSide: BorderSide(color: Colors.purple,width: 2),
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
             SizedBox(height: 12),
-
-            // Date Picker Dropdown
-            Text("Date", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text("Date". style: TextStyle(fontWeight: fontWeight.bold, fontsize: 16)),
             DropdownButtonFormField<String>(
-              value: _selectedDate,
-              onChanged: (value) {
-                setState(() => _selectedDate = value!);
-              },
-              items: ["02/12", "02/13", "02/14"]
-                  .map((date) => DropdownMenuItem(value: date, child: Text(date)))
+              value: _selctedDate,
+              onChanged: (value) => setState(() => _selctedDate = value!), 
+               items: ['02/12', '02/13', '02/14']
+                  .map(date) => DropdownMenuItem(value: date, child: Text(date)))
                   .toList(),
               decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.purple, width: 2),
-                  borderRadius: BorderRadius.circular(8),
+                border: OutlineInputBorder(
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: borderSide(color: Colors.purple, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ) ,
+              SizedBox(height: 12),
+              Text("Time", style:TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              DropdownButtonFormField<String>(
+                value: _selectedTime,
+                onChanged: (value) => setState(() => _selectedTime = value!),
+                items: ['8:00 AM', '9:00 AM', '10:00 AM']
+                 .map((time) => DropdownMenuItem(value: time,child: Text(time)))
+                .toList(),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.purple, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 12),
-
-            // Time Picker Dropdown
-            Text("Time", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            DropdownButtonFormField<String>(
-              value: _selectedTime,
-              onChanged: (value) {
-                setState(() => _selectedTime = value!);
-              },
-              items: ["8:00 AM", "9:00 AM", "10:00 AM"]
-                  .map((time) => DropdownMenuItem(value: time, child: Text(time)))
-                  .toList(),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.purple, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: mainAxisAlignment.spaceBetween,
+                children[
+                  Text("All-Day", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Switch(
+                    value: _isAllDay,
+                    onChanged: (value) => setStyle(() => _isAllDay = value),
+                    activeColor: Colors.purple,
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: 12),
-
-            // All-Day Toggle
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("All-Day", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Switch(
-                  value: _isAllDay,
-                  onChanged: (value) {
-                    setState(() => _isAllDay = value);
-                  },
-                  activeColor: Colors.purple,
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-
-            // Priority Dropdown
-            Text("Priority", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            DropdownButtonFormField<String>(
-              value: _priority,
-              onChanged: (value) {
-                setState(() => _priority = value!);
-              },
-              items: ["High", "Medium", "Low"]
-                  .map((priority) => DropdownMenuItem(value: priority, child: Text(priority)))
-                  .toList(),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.purple, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-
-            // Done Button
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: _navigateBack,
-                icon: Icon(Icons.check, color: Colors.black),
-                label: Text("Done", style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple[200],
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 50),
-                ),
-              ),
-            ),
+              /////////////
+              );,
+             )
           ],
         ),
-      ),
-    );
+      )
+    )
   }
 }

@@ -3,6 +3,8 @@ import 'main_menu.dart';
 import 'register.dart';
 
 class Login extends StatelessWidget {
+  const Login({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

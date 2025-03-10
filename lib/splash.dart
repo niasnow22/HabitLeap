@@ -3,6 +3,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart'; // Import the loading pac
 import 'login.dart'; // Ensure this file exists
 
 class Splash extends StatefulWidget {
+  const Splash({super.key});
+
   @override
   _SplashState createState() => _SplashState();
 }

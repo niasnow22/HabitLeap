@@ -4,6 +4,8 @@ import 'todo_list.dart';
 import 'habit_list.dart';
 
 class MainMenu extends StatefulWidget {
+  const MainMenu({super.key});
+
   @override
   _MainMenuState createState() => _MainMenuState();
 }
@@ -77,7 +79,7 @@ class MenuButton extends StatelessWidget {
   final Color borderColor;
   final VoidCallback onPressed;
 
-  const MenuButton({
+  const MenuButton({super.key, 
     required this.label,
     required this.color,
     required this.borderColor,

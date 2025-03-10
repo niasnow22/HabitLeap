@@ -3,25 +3,56 @@ import 'main_menu.dart';
 import 'account.dart';
 
 class HabitProgress extends StatefulWidget {
+  const HabitProgress({super.key});
+
   @override
   _HabitProgressState createState() => _HabitProgressState();
 }
 
 class _HabitProgressState extends State<HabitProgress> {
-  int completedHabits = 6;
-  int totalHabits = 10;
-  int currentMonthIndex = 1;
+  int completedHabits = 0;
+  int totalHabits = 0;
+  int currentMonthIndex = DateTime.now().month - 1; // Start with the current month
+
   final List<String> months = [
-    "January", "February", "March", "April", "May", "June", "July",
-    "August", "September", "October", "November", "December"
+    "January", 'February', 'March', 'April', 'May', 'June', 'July', 
+    'August', 'September', 'October', 'November', 'December'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHabitData();
+  }
+
+  Future<Database> getDatabase() async {
+    return openDatabase(
+      join(await getDatabasesPath(), 'habits.db'), // Fixed function name
+      version: 1,
+    );
+  }
+
+  Future<void> _loadHabitData() async {
+    final db = await getDatabase();
+    final List<Map<String, dynamic>> habitList = await db.query('habits');
+
+    setState(() {
+      totalHabits = habitList.length; // Fixed incorrect assignment
+      completedHabits = habitList.where((habit) => habit['completed'] == 1).length;
+    });
+  }
+
+  Future<void> markAllHabitsCompleted() async {
+    final db = await getDatabase();
+    await db.update('habits', {'completed': 1}, where: '1=1');
+    _loadHabitData(); // Refresh UI
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // AppBar
       appBar: AppBar(
         title: Text("My Progress", style: TextStyle(color: Colors.black)),
         centerTitle: true,
@@ -29,7 +60,6 @@ class _HabitProgressState extends State<HabitProgress> {
         elevation: 0,
       ),
 
-      // Body Section
       body: Padding(
         padding: EdgeInsets.all(20),
         child: Column(
@@ -40,12 +70,10 @@ class _HabitProgressState extends State<HabitProgress> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(Icons.arrow_left, size: 30, color: Colors.black),
+                  icon: Icon(Icons.arrow_back_ios, size: 30, color: Colors.black),
                   onPressed: () {
                     setState(() {
-                      if (currentMonthIndex > 0) {
-                        currentMonthIndex--;
-                      }
+                      if (currentMonthIndex > 0) currentMonthIndex--;
                     });
                   },
                 ),
@@ -55,19 +83,17 @@ class _HabitProgressState extends State<HabitProgress> {
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: Colors.lightBlue, width: 2),
+                      side: BorderSide(color: Colors.lightBlue[700], width: 2),
                     ),
                   ),
                   onPressed: () {},
                   child: Text(months[currentMonthIndex]),
                 ),
                 IconButton(
-                  icon: Icon(Icons.arrow_right, size: 30, color: Colors.black),
+                  icon: Icon(Icons.arrow_forward_ios, size: 30, color: Colors.black),
                   onPressed: () {
                     setState(() {
-                      if (currentMonthIndex < months.length - 1) {
-                        currentMonthIndex++;
-                      }
+                      if (currentMonthIndex < months.length - 1) currentMonthIndex++;
                     });
                   },
                 ),
@@ -83,9 +109,9 @@ class _HabitProgressState extends State<HabitProgress> {
                   width: 150,
                   height: 150,
                   child: CircularProgressIndicator(
-                    value: completedHabits / totalHabits,
+                    value: totalHabits > 0 ? completedHabits / totalHabits : 0,
                     backgroundColor: Colors.grey[300],
-                    color: Colors.lightBlue,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.lightBlue), // Fixed incorrect `color:`
                     strokeWidth: 8,
                   ),
                 ),
@@ -115,8 +141,13 @@ class _HabitProgressState extends State<HabitProgress> {
                 padding: EdgeInsets.symmetric(vertical: 14, horizontal: 40),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
-              onPressed: () {},
-              child: Text("Habits Completed", style: TextStyle(fontSize: 18)),
+              onPressed: () async {
+                await markAllHabitsCompleted(); // Fixed incorrect function name
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('All habits marked as completed!')),
+                );
+              },
+              child: Text("Mark All Habits Completed", style: TextStyle(fontSize: 18)),
             ),
             SizedBox(height: 20),
 
@@ -155,7 +186,7 @@ class NavButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
 
-  const NavButton({required this.icon, required this.label, required this.onPressed});
+  const NavButton({super.key, required this.icon, required this.label, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

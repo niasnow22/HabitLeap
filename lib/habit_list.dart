@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../db_helper.dart'; imports database
+import 'database.dart';
 import 'account.dart';
 import 'main_menu.dart';
 import 'new_habit.dart';
 import 'habit_progress.dart';
 
 class HabitList extends StatefulWidget {
-  final int userId; //added pass user id for fetching habits
-  HabitList({required this.ueserId});
+  final int userId;
+  const HabitList({super.key, required this.userId});
 
   @override
   _HabitListState createState() => _HabitListState();
@@ -17,44 +17,42 @@ class _HabitListState extends State<HabitList> {
   int selectedDayIndex = 0;
   final List<String> days = [
     "All Days", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-  ]; // make it scollable
+  ];
 
-  final dbHelper = Database.instance; //databse instance
-  List<Map<String, dynamic>> habits = []; //stored fetched habits
+  final dbHelper = Database.instance;
+  List<Map<String, dynamic>> habits = [];
 
-@override
-void initState() {
-  super.initState();
-  _loadHabits(); // fetch habits when screen is loaded
-}
+  @override
+  void initState() {
+    super.initState();
+    _loadHabits();
+  }
 
-void _loadHabits() async { // function to fetch habits
-  final String selectedDay = days[selectedDayIndex]; //get selcted day
-  final habitList = await dbHelper.fetchHabits(widget.userId, dayFilter: selectedDay);
-  setState(() {
-    habits = habitList; //store habits
-  });
-}
+  void _loadHabits() async {
+    final String selectedDay = days[selectedDayIndex];
+    final habitList = await dbHelper.fetchHabits(widget.userId, dayFilter: selectedDay);
+    setState(() {
+      habits = habitList;
+    });
+  }
 
-void _deletedHabit(int id) async { //added delete habit function
-  await dbHelper._deleteHabit(id);
-  _loadHabits(); //store habits
-}
+  void _deleteHabit(int id) async {
+    await dbHelper.deleteHabit(id); _loadHabits();
+    _loadHabits();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // AppBar Section
       appBar: AppBar(
-        title: Text("All Habits", style: TextStyle(color: Colors.black)),
+        title: const Text("All Habits", style: TextStyle(color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.lightBlue[200],
         elevation: 0,
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.only(right: 10),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
@@ -64,67 +62,62 @@ void _deletedHabit(int id) async { //added delete habit function
                 ),
               ),
               onPressed: () {
-                Navigator.push(
+                Navigator.push(context,
                   context,
-                  MaterialPageRoute(builder: (context) => HabitProgress()),
+                  MaterialPageRoute(builder: (context) => const HabitProgress()),
                 );
               },
-              child: Text("My Progress"), // Fixed missing comma
+              child: const Text("My Progress"),
             ),
           ),
         ],
       ),
-
-      // Body Section
       body: Column(
         children: [
-          // Day Filter Tabs with Scroll
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: List.generate(days.length, (index) {
                 return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: ChoiceChip(
                     label: Text(days[index]),
                     selected: selectedDayIndex == index,
                     onSelected: (bool selected) {
                       setState(() {
                         selectedDayIndex = index;
-                        _loadHabits(); //changed refresh habit list
+                        _loadHabits();
                       });
-                                                                  },
+                    },
                     selectedColor: Colors.white,
                     backgroundColor: Colors.grey[200],
-                    labelStyle: TextStyle(color: Colors.black),
+                    labelStyle: const TextStyle(color: Colors.black),
                   ),
                 );
               }),
             ),
           ),
-          SizedBox(height: 10),
-
-          // Habit List
+          const SizedBox(height: 10),
           Expanded(
-            child: habits.isNotEmpty
-            ? Center(child: Text('No habits added yet!')) // added handle empty list
-            : ListVeiw.bilder(
-              itemCount: habits.length,
-              itemBuilder: (context, index) {
-                return HabitCard(
-                  habitName: habits[index]['habit-name'], changed show habit from database
-                  frequency: habits[index]['frequency'], // changed show habit frequncy
-                  onDelete: () => _deletedHabit(habits[index]['id']), //added habit deletion
-                );
-              },
-            ),
-          )
-
-      // Bottom Navigation Bar
+            child: habits.isEmpty
+              ? const Center(child: Text('No habits added yet!'))
+              : ListView.builder(itemCount: habits.length, physics: const BouncingScrollPhysics(),
+                  itemCount: habits.length,
+                  itemBuilder: (context, index) {
+                    return HabitCard(habitName: habits[index]['habit_name'] ?? 'Unnamed Habit',
+                      habitName: habits[index]['habit_name'],
+                      frequency: habits[index]['frequency'],
+                      onDelete: () => _deleteHabit(habits[index]['id']),
+                    );
+                  },
+                ),
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomAppBar(
         color: Colors.lightBlue[200],
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -134,19 +127,18 @@ void _deletedHabit(int id) async { //added delete habit function
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => MainMenu()),
+                    MaterialPageRoute(builder: (context) => const MainMenu()),
                   );
                 },
               ),
               BottomNavButton(
-                icon: Icons.add, // Fixed issue
+                icon: Icons.add,
                 label: "Add",
                 onPressed: () {
-                  Navigator.pushReplacement(
+                  Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => NewHabit(userId: widget.userId)), //pass user id
-                  );
-                  _loadHabits(); // changed refresh list after adding new habits
+                    MaterialPageRoute(builder: (context) => NewHabit(userId: widget.userId)),
+                  ).then((_) => _loadHabits());
                 },
               ),
               BottomNavButton(
@@ -155,7 +147,7 @@ void _deletedHabit(int id) async { //added delete habit function
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => Account()),
+                    MaterialPageRoute(builder: (context) => const Account()),
                   );
                 },
               ),
@@ -167,13 +159,13 @@ void _deletedHabit(int id) async { //added delete habit function
   }
 }
 
-// Habit Card Widget - changed accepts real habit data
 class HabitCard extends StatelessWidget {
-  final String this.habitNew;
-  final String this.frequency:
-  final VoidCallBack onDelete;
+  final String habitName;
+  final String frequency;
+  final VoidCallback onDelete;
 
-  HabitCard({
+  const HabitCard({
+    super.key,
     required this.habitName,
     required this.frequency,
     required this.onDelete,
@@ -184,25 +176,29 @@ class HabitCard extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: Colors.lightBlue, width: 2),
+        side: const BorderSide(color: Colors.lightBlue, width: 2),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       child: ListTile(
-        leading: Icon(Icons.repeat, color: Colors.black), // Habit Icon
-        title: Text("Menu Label", style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text("Menu description."),
+        leading: const Icon(Icons.repeat, color: Colors.black),
+        title: Text(habitName, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text("Frequency: $frequency"),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: onDelete,
+        ),
       ),
     );
   }
 }
 
-// Bottom Navigation Button Widget
 class BottomNavButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
 
   const BottomNavButton({
+    super.key,
     required this.icon,
     required this.label,
     required this.onPressed,
@@ -210,8 +206,8 @@ class BottomNavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox( // Constrain height to prevent overflow
-      height: 60, // Adjust height as needed
+    return SizedBox(
+      height: 60,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -219,11 +215,9 @@ class BottomNavButton extends StatelessWidget {
             icon: Icon(icon, size: 28, color: Colors.black),
             onPressed: onPressed,
           ),
-          Text(label, style: TextStyle(fontSize: 14, color: Colors.black)), // Fixed text style error
+          Text(label, style: const TextStyle(fontSize: 14, color: Colors.black)),
         ],
       ),
     );
   }
 }
-
-

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'database.dart';
 import 'account.dart';
 import 'main_menu.dart';
 import 'new_todo.dart';
 import 'todo_progress.dart';
 
 class ToDoList extends StatefulWidget {
+  const ToDoList({super.key});
+
   @override
   _ToDoListState createState() => _ToDoListState();
 }
@@ -12,13 +15,35 @@ class ToDoList extends StatefulWidget {
 class _ToDoListState extends State<ToDoList> {
   int selectedFilterIndex = 0;
   final List<String> filters = ["All Tasks", "Top Priority", "Low Priority"];
+  List<Map<String, dynamic>> tasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTasks();
+  }
+
+  Future<void> _loadTasks() async {
+    final data = await DatabaseHelper.instance.getTasks();
+    setState(() {
+      tasks = data;
+    });
+  }
+
+  void _deleteTask(int id) async {
+    await DatabaseHelper.instance.deleteTask(id);
+    _loadTasks();
+  }
+
+  void _toggleTaskCompletion(int id, bool isCompleted) async {
+    await DatabaseHelper.instance.updateTask(id, isCompleted);
+    _loadTasks();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // AppBar
       appBar: AppBar(
         title: Text("To-Do List", style: TextStyle(color: Colors.black)),
         centerTitle: true,
@@ -37,7 +62,7 @@ class _ToDoListState extends State<ToDoList> {
                 ),
               ),
               onPressed: () {
-                 Navigator.pushReplacement(
+                 Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => ToDoProgress()),
                   );
@@ -47,11 +72,8 @@ class _ToDoListState extends State<ToDoList> {
           ),
         ],
       ),
-
-      // Body
       body: Column(
         children: [
-          // Filter Tabs
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -75,8 +97,6 @@ class _ToDoListState extends State<ToDoList> {
             ),
           ),
           SizedBox(height: 10),
-
-          // Task List inside a Bordered Box
           Expanded(
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 20),
@@ -85,17 +105,32 @@ class _ToDoListState extends State<ToDoList> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: ListView.builder(
-                itemCount: 5, // Example tasks
+                itemCount: tasks.length,
                 itemBuilder: (context, index) {
-                  return ToDoTask();
+                  final task = tasks[index];
+                  return ListTile(
+                    leading: Checkbox(
+                      value: task['isCompleted'] == 1,
+                      activeColor: Colors.purple,
+                      onChanged: (bool? value) {
+                        _toggleTaskCompletion(task['id'], value ?? false);
+                      },
+                    ),
+                    title: Text(task['title'], style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(task['description']),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete, color: Colors.black),
+                      onPressed: () {
+                        _deleteTask(task['id']);
+                      },
+                    ),
+                  );
                 },
               ),
             ),
           ),
         ],
       ),
-
-      // Bottom Navigation Bar
       bottomNavigationBar: BottomAppBar(
         color: Colors.purple[200],
         child: Padding(
@@ -116,11 +151,14 @@ class _ToDoListState extends State<ToDoList> {
               BottomNavButton(
                 icon: Icons.add,
                 label: "Add",
-                onPressed: () {
-                   Navigator.pushReplacement(
+                onPressed: () async {
+                  final newTaskId = await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => NewToDo()),
                   );
+                  if (newTaskId != null) {
+                    _loadTasks();
+                  }
                 },
               ),
               BottomNavButton(
@@ -137,60 +175,6 @@ class _ToDoListState extends State<ToDoList> {
           ),
         ),
       ),
-    );
-  }
-}
-
-// To-Do Task Widget (Checkbox enabled)
-class ToDoTask extends StatefulWidget {
-  @override
-  _ToDoTaskState createState() => _ToDoTaskState();
-}
-
-class _ToDoTaskState extends State<ToDoTask> {
-  bool isChecked = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Checkbox(
-        value: isChecked,
-        activeColor: Colors.purple,
-        onChanged: (bool? value) {
-          setState(() {
-            isChecked = value ?? false;
-          });
-        },
-      ),
-      title: Text("Task Label", style: TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text("Task description"),
-    );
-  }
-}
-
-// Bottom Navigation Button Widget
-class BottomNavButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-
-  const BottomNavButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconButton(
-          icon: Icon(icon, size: 28, color: Colors.black),
-          onPressed: onPressed,
-        ),
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.black)),
-      ],
     );
   }
 }

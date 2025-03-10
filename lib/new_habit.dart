@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'database.dart';
 import 'habit_list.dart';
 
 class NewHabit extends StatefulWidget {
+  const NewHabit({super.key});
+
   @override
   _NewHabitState createState() => _NewHabitState();
 }
@@ -9,17 +12,38 @@ class NewHabit extends StatefulWidget {
 class _NewHabitState extends State<NewHabit> {
   final TextEditingController afterController = TextEditingController();
   final TextEditingController willController = TextEditingController();
-  int selectedDayIndex = 0;
-  final List<String> days = ["All Days", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  int selectedDay = 0;
+  final List<String> days = ['AllDays', "Monday", 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+  Future<Database> getDatabase() async {
+    return openDatabase(
+      join(await getDatabasesPath(), 'habits.db'), // Fixed function name
+      onCreate: (db, version) {
+        return db.execute(
+          'CREATE TABLE habits(id INTEGER PRIMARY KEY AUTOINCREMENT, after TEXT, will TEXT, day TEXT)'
+        );
+      },
+      version: 1,
+    );
+  }
+
+  Future<void> addHabit() async {
+    final db = await getDatabase();
+    await db.insert(
+      'habits',
+      {
+        'after': afterController.text,
+        'will': willController.text,
+        'day': days[selectedDay] // Fixed variable name
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
-
-      //AppBar
       appBar: AppBar(
         title: Text("New Habit", style: TextStyle(color: Colors.black)),
         centerTitle: true,
@@ -38,37 +62,32 @@ class _NewHabitState extends State<NewHabit> {
                 ),
               ),
               onPressed: () {
-                Navigator.pop(context);
-},
-              child: Text("Cancel"),
+                Navigator.pop(context); // Fixed function name
+              },
+              child: Text('Cancel'),
             ),
           )
         ],
       ),
-
-      //Body 
       body: Padding(
         padding: EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //After I..
-            Text("After I,", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('After I,', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 5),
             TextField(
               controller: afterController,
               maxLines: 2,
               decoration: InputDecoration(
-                hintText: "ex: brushing my teeth, homework",
+                hintText: 'ex: brushing my teeth, homework',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide(color: Colors.lightBlue),
                 ),
               ),
             ),
             SizedBox(height: 20),
-
-            //I will....
             Text("I will,", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 5),
             TextField(
@@ -83,14 +102,9 @@ class _NewHabitState extends State<NewHabit> {
               ),
             ),
             SizedBox(height: 20),
-
-
-            //Reminder Days Selected
-            Text("What days do you need to be remineded?", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            Divider(color: Colors.black,),
+            Text("What days do you need to be reminded?", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Divider(color: Colors.black),
             SizedBox(height: 10),
-
-            //Day filter tabs with scroll
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -99,10 +113,10 @@ class _NewHabitState extends State<NewHabit> {
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     child: ChoiceChip(
                       label: Text(days[index]),
-                      selected: selectedDayIndex == index,
+                      selected: selectedDay == index, // Fixed variable name
                       onSelected: (bool selected) {
                         setState(() {
-                          selectedDayIndex == index;
+                          selectedDay = index; // Fixed syntax
                         });
                       },
                       selectedColor: Colors.lightBlue[100],
@@ -118,8 +132,6 @@ class _NewHabitState extends State<NewHabit> {
               ),
             ),
             SizedBox(height: 20),
-
-            //Done Button
             Center(
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
@@ -127,15 +139,21 @@ class _NewHabitState extends State<NewHabit> {
                   foregroundColor: Colors.black,
                   padding: EdgeInsets.symmetric(vertical: 14, horizontal: 40),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ) ,
+                ),
                 icon: Icon(Icons.check_box, color: Colors.black),
                 label: Text("Done", style: TextStyle(fontSize: 18)),
-                onPressed: () {
-                  //Save habit logic here
-                  Navigator.pushReplacement(
-                    context, 
-                    MaterialPageRoute(builder: (context) => HabitList()),
-                  );
+                onPressed: () async {
+                  if (afterController.text.isNotEmpty && willController.text.isNotEmpty) {
+                    await addHabit();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HabitList()),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Please fill in both fields')),
+                    );
+                  }
                 },
               ),
             ),

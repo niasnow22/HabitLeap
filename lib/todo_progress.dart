@@ -3,13 +3,15 @@ import 'main_menu.dart';  // Ensure this exists
 import 'account.dart';    // Ensure this exists
 
 class ToDoProgress extends StatefulWidget {
+  const ToDoProgress({super.key});
+
   @override
   _ToDoProgressState createState() => _ToDoProgressState();
 }
 
 class _ToDoProgressState extends State<ToDoProgress> {
-  int _currentProgress = 6;
-  int _goal = 10;
+  final int _currentProgress = 6;
+  final int _goal = 10;
   String _selectedMonth = "February";
 
   void _previousMonth() {
