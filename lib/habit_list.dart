@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import '../db_helper.dart'; imports database
 import 'account.dart';
 import 'main_menu.dart';
 import 'new_habit.dart';
 import 'habit_progress.dart';
 
 class HabitList extends StatefulWidget {
+  final int userId; //added pass user id for fetching habits
+  HabitList({required this.ueserId});
+
   @override
   _HabitListState createState() => _HabitListState();
 }
@@ -14,6 +18,28 @@ class _HabitListState extends State<HabitList> {
   final List<String> days = [
     "All Days", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
   ]; // make it scollable
+
+  final dbHelper = Database.instance; //databse instance
+  List<Map<String, dynamic>> habits = []; //stored fetched habits
+
+@override
+void initState() {
+  super.initState();
+  _loadHabits(); // fetch habits when screen is loaded
+}
+
+void _loadHabits() async { // function to fetch habits
+  final String selectedDay = days[selectedDayIndex]; //get selcted day
+  final habitList = await dbHelper.fetchHabits(widget.userId, dayFilter: selectedDay);
+  setState(() {
+    habits = habitList; //store habits
+  });
+}
+
+void _deletedHabit(int id) async { //added delete habit function
+  await dbHelper._deleteHabit(id);
+  _loadHabits(); //store habits
+}
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +91,9 @@ class _HabitListState extends State<HabitList> {
                     onSelected: (bool selected) {
                       setState(() {
                         selectedDayIndex = index;
+                        _loadHabits(); //changed refresh habit list
                       });
-                    },
+                                                                  },
                     selectedColor: Colors.white,
                     backgroundColor: Colors.grey[200],
                     labelStyle: TextStyle(color: Colors.black),
@@ -79,15 +106,19 @@ class _HabitListState extends State<HabitList> {
 
           // Habit List
           Expanded(
-            child: ListView.builder(
-              itemCount: 5, // Example habit items
+            child: habits.isNotEmpty
+            ? Center(child: Text('No habits added yet!')) // added handle empty list
+            : ListVeiw.bilder(
+              itemCount: habits.length,
               itemBuilder: (context, index) {
-                return HabitCard();
+                return HabitCard(
+                  habitName: habits[index]['habit-name'], changed show habit from database
+                  frequency: habits[index]['frequency'], // changed show habit frequncy
+                  onDelete: () => _deletedHabit(habits[index]['id']), //added habit deletion
+                );
               },
             ),
-          ),
-        ],
-      ),
+          )
 
       // Bottom Navigation Bar
       bottomNavigationBar: BottomAppBar(
@@ -113,8 +144,9 @@ class _HabitListState extends State<HabitList> {
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => NewHabit()),
+                    MaterialPageRoute(builder: (context) => NewHabit(userId: widget.userId)), //pass user id
                   );
+                  _loadHabits(); // changed refresh list after adding new habits
                 },
               ),
               BottomNavButton(
@@ -135,8 +167,18 @@ class _HabitListState extends State<HabitList> {
   }
 }
 
-// Habit Card Widget (Changed to StatelessWidget)
+// Habit Card Widget - changed accepts real habit data
 class HabitCard extends StatelessWidget {
+  final String this.habitNew;
+  final String this.frequency:
+  final VoidCallBack onDelete;
+
+  HabitCard({
+    required this.habitName,
+    required this.frequency,
+    required this.onDelete,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -183,4 +225,5 @@ class BottomNavButton extends StatelessWidget {
     );
   }
 }
+
 
