@@ -168,15 +168,19 @@ class BottomNavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconButton(
-          icon: Icon(icon, size: 28, color: Colors.black),
-          onPressed: onPressed,
-        ),
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.black)), // Fixed text style error
-      ],
+    return SizedBox( // Constrain height to prevent overflow
+      height: 60, // Adjust height as needed
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: Icon(icon, size: 28, color: Colors.black),
+            onPressed: onPressed,
+          ),
+          Text(label, style: TextStyle(fontSize: 14, color: Colors.black)), // Fixed text style error
+        ],
+      ),
     );
   }
 }
+

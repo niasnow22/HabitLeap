@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'main_menu.dart';
+import 'register.dart';
 
 class Login extends StatelessWidget {
   @override
@@ -106,24 +107,38 @@ class Login extends StatelessWidget {
             ),
             SizedBox(height: 20),
 
-            // Register (Now a Non-Clickable Container)
-            Container(
-              width: 180,
-              padding: EdgeInsets.symmetric(vertical: 14),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.purple[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                "Register",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ),
+            // Register (TextButton inside a styled Container)
+Container(
+  width: 180,
+  decoration: BoxDecoration(
+    color: Colors.purple[300], // Keep the purple background
+    borderRadius: BorderRadius.circular(10),
+  ),
+  child: TextButton(
+    onPressed: () {
+      // Navigate to Register Screen
+      Navigator.push(
+        context, 
+        MaterialPageRoute(builder: (context) => Register()),
+      );
+    },
+    style: TextButton.styleFrom(
+      padding: EdgeInsets.symmetric(vertical: 14), // Keep padding like before
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10), // Ensure button aligns with container
+      ),
+    ),
+    child: Text(
+      "Register",
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.black, // Keep black text color
+      ),
+    ),
+  ),
+),
+
           ],
         ),
       ),

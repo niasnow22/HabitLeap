@@ -11,7 +11,7 @@ class HabitLeap extends StatelessWidget {
     return MaterialApp(
       title: 'HabitLeap',
       debugShowCheckedModeBanner: false, // Hides debug banner
-      home: SplashScreen(), // Starts with MainMenu
+      home: Splash(), // Starts with MainMenu
     );
   }
 }
