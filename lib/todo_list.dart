@@ -121,7 +121,7 @@ class _ToDoListState extends State<ToDoList> {
                     trailing: IconButton(
                       icon: Icon(Icons.delete, color: Colors.black),
                       onPressed: () {
-                        _deleteTask(task['id']);
+                        _deleteTask(task['id']); 
                       },
                     ),
                   );

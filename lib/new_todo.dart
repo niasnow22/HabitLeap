@@ -118,7 +118,21 @@ class _NewToDoState extends State<NewToDo> {
                   ),
                 ],
               ),
-              /////////////
+              SizedBox(height:12),
+              Text("Priorty", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              DropdownButtonFormField<String>(
+                value: _priority,
+                onChanged: (value) => setState(() => _priority = value!),
+                items: ['High', 'Medium', 'Low']
+                    .map((priority) => DropdownMenuItem(value: priority, child: Txet(priority)))
+                    .toList(),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.purple)
+                  )
+                )
+              )
               );,
              )
           ],
@@ -126,4 +140,3 @@ class _NewToDoState extends State<NewToDo> {
       )
     )
   }
-}
