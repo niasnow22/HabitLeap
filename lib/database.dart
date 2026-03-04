@@ -1,145 +1,227 @@
-import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';
+
+import 'package:sembast_sqflite/sembast_sqflite.dart';
+import 'package:sembast_web/sembast_web.dart';
+
+import 'package:sqflite/sqflite.dart' as sqflite;
+
+
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
-  static Database? _database;
+  static Database? _db;
 
   DatabaseHelper._init();
 
+  // Stores (like tables)
+  final StoreRef<int, Map<String, dynamic>> _usersStore =
+      intMapStoreFactory.store('users');
+  final StoreRef<int, Map<String, dynamic>> _habitsStore =
+      intMapStoreFactory.store('habits');
+  final StoreRef<int, Map<String, dynamic>> _tasksStore =
+      intMapStoreFactory.store('tasks');
+
   Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB('app_database.db');
-    return _database!;
+    if (_db != null) return _db!;
+    _db = await _initDB('app_database.sembast');
+    return _db!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    final path = join(documentsDirectory.path, filePath);
+  Future<Database> _initDB(String fileName) async {
+  if (kIsWeb) {
+    // 🌐 Web → IndexedDB
+    return databaseFactoryWeb.openDatabase(fileName);
+  } else {
+    // 📱 Mobile → SQLite via sqflite (used internally by sembast)
+    final dir = await getApplicationDocumentsDirectory();
+    final dbPath = join(dir.path, fileName);
 
-    return await openDatabase(
-      path,
-      version: 3, // Increment version for new columns
-      onCreate: _createDB,
-      onUpgrade: _onUpgrade,
-    );
+    return getDatabaseFactorySqflite(sqflite.databaseFactory)
+        .openDatabase(dbPath);
   }
+}
 
-  Future<void> _createDB(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL,
-        password TEXT NOT NULL
-      );
-    ''');
 
-    await db.execute('''
-      CREATE TABLE habits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        description TEXT,
-        frequency TEXT NOT NULL,
-        day TEXT NOT NULL
-      );
-    ''');
 
-    await db.execute('''
-      CREATE TABLE tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        description TEXT NOT NULL,
-        date TEXT NOT NULL,
-        time TEXT NOT NULL,
-        priority TEXT NOT NULL,
-        isCompleted INTEGER DEFAULT 0
-      );
-    ''');
-  }
-
-  // Handle database upgrades
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
-      await db.execute("ALTER TABLE tasks ADD COLUMN isCompleted INTEGER DEFAULT 0");
-    }
-  }
-
-  // --- USER FUNCTIONS ---
+  // --------------------
+  // USER FUNCTIONS
+  // --------------------
   Future<int> createUser(String username, String password) async {
     final db = await database;
-    return await db.insert('users', {
+
+    final id = await _usersStore.add(db, {
       'username': username,
       'password': password,
     });
+
+    await _usersStore.record(id).update(db, {'id': id});
+    return id;
   }
 
   Future<List<Map<String, dynamic>>> getUsers() async {
     final db = await database;
-    return await db.query('users');
+    final records = await _usersStore.find(db);
+
+    return records.map((r) {
+      final data = Map<String, dynamic>.from(r.value);
+      data['id'] = r.key;
+      return data;
+    }).toList();
   }
 
-  // --- HABIT FUNCTIONS ---
-  Future<int> addHabit(int userId, String title, String description, String frequency, String day) async {
+  // --------------------
+  // HABIT FUNCTIONS
+  // --------------------
+  Future<int> addHabit(
+    int userId,
+    String title,
+    String description,
+    String frequency,
+    String day,
+  ) async {
     final db = await database;
-    return await db.insert('habits', {
+
+    final id = await _habitsStore.add(db, {
       'user_id': userId,
       'title': title,
       'description': description,
       'frequency': frequency,
       'day': day,
+      'completed': false, // ✅ NEW
     });
+
+    await _habitsStore.record(id).update(db, {'id': id});
+    return id;
   }
 
-  Future<List<Map<String, dynamic>>> fetchHabits(int userId, {String dayFilter = "All Days"}) async {
+  // All habits for a specific user (with optional day filter)
+  Future<List<Map<String, dynamic>>> fetchHabits(
+    int userId, {
+    String dayFilter = "All Days",
+  }) async {
     final db = await database;
 
-    if (dayFilter == "All Days") {
-      return await db.query('habits', where: 'user_id = ?', whereArgs: [userId]);
+    final filters = <Filter>[Filter.equals('user_id', userId)];
+    if (dayFilter != "All Days") {
+      filters.add(Filter.equals('day', dayFilter));
     }
 
-    return await db.query('habits', where: 'user_id = ? AND day = ?', whereArgs: [userId, dayFilter]);
+    final finder = Finder(filter: Filter.and(filters));
+    final records = await _habitsStore.find(db, finder: finder);
+
+    return records.map((r) {
+      final data = Map<String, dynamic>.from(r.value);
+      data['id'] = r.key;
+      data['completed'] = data['completed'] ?? false; // ✅ normalize
+      return data;
+    }).toList();
+  }
+
+  // ✅ All habits (no user filter) - matches old db.query('habits')
+  Future<List<Map<String, dynamic>>> fetchAllHabits() async {
+    final db = await database;
+    final records = await _habitsStore.find(db);
+
+    return records.map((r) {
+      final data = Map<String, dynamic>.from(r.value);
+      data['id'] = r.key;
+      data['completed'] = data['completed'] ?? false;
+      return data;
+    }).toList();
   }
 
   Future<int> deleteHabit(int id) async {
     final db = await database;
-    return await db.delete('habits', where: 'id = ?', whereArgs: [id]);
+    await _habitsStore.record(id).delete(db);
+    return 1;
   }
 
-  // --- TASK FUNCTIONS ---
-  Future<int> insertTask(String description, String date, String time, String priority, {bool isCompleted = false}) async {
+  // ✅ Update one habit completion (checkbox support)
+  Future<int> updateHabitCompleted(int habitId, bool completed) async {
     final db = await database;
-    return await db.insert(
-      'tasks',
-      {
-        'description': description,
-        'date': date,
-        'time': time,
-        'priority': priority,
-        'isCompleted': isCompleted ? 1 : 0, // Store as INTEGER (1 = completed, 0 = not completed)
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace, // Prevent duplicate errors
+    await _habitsStore.record(habitId).update(db, {'completed': completed});
+    return 1;
+  }
+
+  // ✅ Mark habits completed for a specific user (optional day filter)
+  Future<void> markAllHabitsCompleted(int userId, {String? day}) async {
+    final db = await database;
+
+    final filters = <Filter>[Filter.equals('user_id', userId)];
+    if (day != null && day != "All Days") {
+      filters.add(Filter.equals('day', day));
+    }
+
+    final finder = Finder(filter: Filter.and(filters));
+
+    await _habitsStore.update(
+      db,
+      {'completed': true},
+      finder: finder,
     );
+  }
+
+  // ✅ Mark ALL habits completed (no user filter)
+  Future<void> markAllHabitsCompletedAllUsers() async {
+    final db = await database;
+    await _habitsStore.update(db, {'completed': true});
+  }
+
+  // --------------------
+  // TASK FUNCTIONS
+  // --------------------
+  Future<int> insertTask(
+    String description,
+    String date,
+    String time,
+    String priority, {
+    bool isCompleted = false,
+  }) async {
+    final db = await database;
+
+    final id = await _tasksStore.add(db, {
+      'description': description,
+      'date': date,
+      'time': time,
+      'priority': priority,
+      'isCompleted': isCompleted,
+    });
+
+    await _tasksStore.record(id).update(db, {'id': id});
+    return id;
   }
 
   Future<List<Map<String, dynamic>>> getTasks() async {
     final db = await database;
-    return await db.query('tasks');
+
+    final finder = Finder(
+      sortOrders: [SortOrder('date'), SortOrder('time')],
+    );
+
+    final records = await _tasksStore.find(db, finder: finder);
+
+    return records.map((r) {
+      final data = Map<String, dynamic>.from(r.value);
+      data['id'] = r.key;
+
+      final v = data['isCompleted'];
+      if (v is int) data['isCompleted'] = (v == 1);
+
+      return data;
+    }).toList();
   }
 
   Future<int> deleteTask(int id) async {
     final db = await database;
-    return await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+    await _tasksStore.record(id).delete(db);
+    return 1;
   }
 
   Future<int> updateTask(int id, bool isCompleted) async {
     final db = await database;
-    return await db.update(
-      'tasks',
-      {'isCompleted': isCompleted ? 1 : 0},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await _tasksStore.record(id).update(db, {'isCompleted': isCompleted});
+    return 1;
   }
 }

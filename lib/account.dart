@@ -55,7 +55,7 @@ class _AccountState extends State<Account> {
                 Text("Notification", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Switch(
                   value: notificationEnabled,
-                  activeColor: Colors.orange[700],
+                  activeThumbColor: Colors.orange[700],
                   onChanged: (bool value) {
                     setState(() {
                       notificationEnabled = value;

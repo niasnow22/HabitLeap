@@ -19,7 +19,7 @@ class _HabitListState extends State<HabitList> {
     "All Days", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
   ];
 
-  final dbHelper = DatabaseHelper.instance; // Use DatabaseHelper instance
+  final dbHelper = DatabaseHelper.instance;
   List<Map<String, dynamic>> habits = [];
 
   @override
@@ -38,12 +38,13 @@ class _HabitListState extends State<HabitList> {
 
   void _deleteHabit(int id) async {
     await dbHelper.deleteHabit(id);
-    _loadHabits(); // Reload habits after deletion
+    _loadHabits();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Prevents resizing when keyboard appears
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("All Habits", style: TextStyle(color: Colors.black)),
@@ -62,7 +63,6 @@ class _HabitListState extends State<HabitList> {
                 ),
               ),
               onPressed: () {
-                // Navigate to HabitProgress screen
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const HabitProgress()),
@@ -73,50 +73,50 @@ class _HabitListState extends State<HabitList> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Day filter chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(days.length, (index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: ChoiceChip(
-                    label: Text(days[index]),
-                    selected: selectedDayIndex == index,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        selectedDayIndex = index;
-                        _loadHabits();
-                      });
-                    },
-                    selectedColor: Colors.white,
-                    backgroundColor: Colors.grey[200],
-                    labelStyle: const TextStyle(color: Colors.black),
-                  ),
-                );
-              }),
+      body: SingleChildScrollView( // Added SingleChildScrollView
+        child: Column(
+          children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(days.length, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: ChoiceChip(
+                      label: Text(days[index]),
+                      selected: selectedDayIndex == index,
+                      onSelected: (bool selected) {
+                        setState(() {
+                          selectedDayIndex = index;
+                          _loadHabits();
+                        });
+                      },
+                      selectedColor: Colors.white,
+                      backgroundColor: Colors.grey[200],
+                      labelStyle: const TextStyle(color: Colors.black),
+                    ),
+                  );
+                }),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          // Habit list
-          Expanded(
-            child: habits.isEmpty
-              ? const Center(child: Text('No habits added yet!'))
-              : ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: habits.length,
-                  itemBuilder: (context, index) {
-                    return HabitCard(
-                      habitName: habits[index]['title'] ?? 'Unnamed Habit', // Use 'title'
-                      frequency: habits[index]['frequency'],
-                      onDelete: () => _deleteHabit(habits[index]['id']),
-                    );
-                  },
-                ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Expanded(
+              child: habits.isEmpty
+                  ? const Center(child: Text('No habits added yet!'))
+                  : ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: habits.length,
+                      itemBuilder: (context, index) {
+                        return HabitCard(
+                          habitName: habits[index]['title'] ?? 'Unnamed Habit',
+                          frequency: habits[index]['frequency'],
+                          onDelete: () => _deleteHabit(habits[index]['id']),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: BottomAppBar(
         color: Colors.lightBlue[200],
@@ -129,7 +129,6 @@ class _HabitListState extends State<HabitList> {
                 icon: Icons.home,
                 label: "Home",
                 onPressed: () {
-                  // Navigate to MainMenu screen
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const MainMenu()),
@@ -140,7 +139,6 @@ class _HabitListState extends State<HabitList> {
                 icon: Icons.add,
                 label: "Add",
                 onPressed: () {
-                  // Navigate to NewHabit screen and reload habits on return
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => NewHabit(userId: widget.userId)),
@@ -151,7 +149,6 @@ class _HabitListState extends State<HabitList> {
                 icon: Icons.account_circle,
                 label: "Account",
                 onPressed: () {
-                  // Navigate to Account screen
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const Account()),

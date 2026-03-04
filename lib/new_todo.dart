@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'database.dart';
-import 'todo_list.dart'; // Ensure this matches your ToDoList file
+// Ensure this matches your ToDoList file
 
 class NewToDo extends StatefulWidget {
   const NewToDo({super.key});
@@ -153,7 +153,7 @@ class _NewToDoState extends State<NewToDo> {
                 Switch(
                   value: _isAllDay,
                   onChanged: (value) => setState(() => _isAllDay = value),
-                  activeColor: Colors.purple,
+                  activeThumbColor: Colors.purple,
                 ),
               ],
             ),
@@ -162,7 +162,7 @@ class _NewToDoState extends State<NewToDo> {
             // Priority Selector
             const Text("Priority", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             DropdownButtonFormField<String>(
-              value: _priority,
+              initialValue: _priority,
               onChanged: (value) => setState(() => _priority = value!),
               items: const ["High", "Medium", "Low"]
                   .map((priority) => DropdownMenuItem(value: priority, child: Text(priority)))

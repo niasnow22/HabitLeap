@@ -7,7 +7,7 @@ class HabitProgress extends StatefulWidget {
   const HabitProgress({super.key});
 
   @override
-  _HabitProgressState createState() => _HabitProgressState();
+  State<HabitProgress> createState() => _HabitProgressState();
 }
 
 class _HabitProgressState extends State<HabitProgress> {
@@ -16,8 +16,18 @@ class _HabitProgressState extends State<HabitProgress> {
   int currentMonthIndex = DateTime.now().month - 1;
 
   final List<String> months = [
-    "January", 'February', 'March', 'April', 'May', 'June', 'July', 
-    'August', 'September', 'October', 'November', 'December'
+    "January",
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
   ];
 
   @override
@@ -27,19 +37,21 @@ class _HabitProgressState extends State<HabitProgress> {
   }
 
   Future<void> _loadHabitData() async {
-    final db = await DatabaseHelper.instance.database;
-    final List<Map<String, dynamic>> habitList = await db.query('habits');
+    // If you have user accounts and want per-user progress,
+    // you should pass a userId into HabitProgress and use it here.
+    // For now, we load ALL habits (matches your old db.query('habits')).
+
+    final habits = await DatabaseHelper.instance.fetchAllHabits();
 
     setState(() {
-      totalHabits = habitList.length;
-      completedHabits = habitList.where((habit) => habit['completed'] == 1).length;
+      totalHabits = habits.length;
+      completedHabits = habits.where((h) => (h['completed'] == true)).length;
     });
   }
 
   Future<void> markAllHabitsCompleted() async {
-    final db = await DatabaseHelper.instance.database;
-    await db.update('habits', {'completed': 1}, where: '1=1');
-    _loadHabitData();
+    await DatabaseHelper.instance.markAllHabitsCompletedAllUsers();
+    await _loadHabitData();
   }
 
   @override
@@ -47,13 +59,13 @@ class _HabitProgressState extends State<HabitProgress> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("My Progress", style: TextStyle(color: Colors.black)),
+        title: const Text("My Progress", style: TextStyle(color: Colors.black)),
         centerTitle: true,
-        backgroundColor: Colors.lightBlue[200],
+        backgroundColor: Colors.lightBlueAccent,
         elevation: 0,
       ),
       body: Padding(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -61,7 +73,8 @@ class _HabitProgressState extends State<HabitProgress> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(Icons.arrow_back_ios, size: 30, color: Colors.black),
+                  icon: const Icon(Icons.arrow_back_ios,
+                      size: 30, color: Colors.black),
                   onPressed: () {
                     setState(() {
                       if (currentMonthIndex > 0) currentMonthIndex--;
@@ -81,16 +94,19 @@ class _HabitProgressState extends State<HabitProgress> {
                   child: Text(months[currentMonthIndex]),
                 ),
                 IconButton(
-                  icon: Icon(Icons.arrow_forward_ios, size: 30, color: Colors.black),
+                  icon: const Icon(Icons.arrow_forward_ios,
+                      size: 30, color: Colors.black),
                   onPressed: () {
                     setState(() {
-                      if (currentMonthIndex < months.length - 1) currentMonthIndex++;
+                      if (currentMonthIndex < months.length - 1) {
+                        currentMonthIndex++;
+                      }
                     });
                   },
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Stack(
               alignment: Alignment.center,
               children: [
@@ -100,7 +116,8 @@ class _HabitProgressState extends State<HabitProgress> {
                   child: CircularProgressIndicator(
                     value: totalHabits > 0 ? completedHabits / totalHabits : 0,
                     backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.lightBlue),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.lightBlue),
                     strokeWidth: 8,
                   ),
                 ),
@@ -114,46 +131,57 @@ class _HabitProgressState extends State<HabitProgress> {
                   child: Center(
                     child: Text(
                       "$completedHabits/$totalHabits",
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.lightBlue[200],
                 foregroundColor: Colors.black,
-                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 40),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 40),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
               ),
               onPressed: () async {
                 await markAllHabitsCompleted();
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('All habits marked as completed!')),
+                  const SnackBar(content: Text('All habits marked as completed!')),
                 );
               },
-              child: Text("Mark All Habits Completed", style: TextStyle(fontSize: 18)),
+              child: const Text("Mark All Habits Completed",
+                  style: TextStyle(fontSize: 18)),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Column(
               children: [
                 NavButton(icon: Icons.share, label: "Share", onPressed: () {}),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 NavButton(
                   icon: Icons.home,
                   label: "Home",
                   onPressed: () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainMenu()));
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MainMenu()),
+                    );
                   },
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 NavButton(
                   icon: Icons.account_circle,
                   label: "Account",
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => Account()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Account()),
+                    );
                   },
                 ),
               ],
@@ -170,7 +198,12 @@ class NavButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
 
-  const NavButton({super.key, required this.icon, required this.label, required this.onPressed});
+  const NavButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -180,11 +213,11 @@ class NavButton extends StatelessWidget {
         foregroundColor: Colors.black,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: Colors.lightBlue, width: 2),
+          side: const BorderSide(color: Colors.lightBlue, width: 2),
         ),
       ),
       icon: Icon(icon),
-      label: Text(label, style: TextStyle(fontSize: 16)),
+      label: Text(label, style: const TextStyle(fontSize: 16)),
       onPressed: onPressed,
     );
   }
