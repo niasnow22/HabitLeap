@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'main_menu.dart';  // Ensure this exists
-import 'account.dart';    // Ensure this exists
+import 'main_menu.dart';
+import 'account.dart';
+import 'database.dart';
 
 class ToDoProgress extends StatefulWidget {
   const ToDoProgress({super.key});
@@ -10,19 +11,47 @@ class ToDoProgress extends StatefulWidget {
 }
 
 class _ToDoProgressState extends State<ToDoProgress> {
-  final int _currentProgress = 6;
-  final int _goal = 10;
-  String _selectedMonth = "February";
+  int _currentProgress = 0;
+  int _goal = 1; // Default to avoid division by zero
+  String _selectedMonth = "March"; // Default month
+  final List<String> _months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  int _monthIndex = 2; // March (0-based index)
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProgress();
+  }
+
+  Future<void> _loadProgress() async {
+    List<Map<String, dynamic>> tasks = await DatabaseHelper.instance.getTasks();
+
+    // Count completed tasks
+    int completedTasks = tasks.where((task) => task['isCompleted'] == 1).length;
+    
+    // Ensure goal isn't zero to prevent errors
+    setState(() {
+      _currentProgress = completedTasks;
+      _goal = tasks.isNotEmpty ? tasks.length : 1; 
+    });
+  }
 
   void _previousMonth() {
     setState(() {
-      _selectedMonth = "January"; // Placeholder for actual month logic
+      if (_monthIndex > 0) _monthIndex--;
+      _selectedMonth = _months[_monthIndex];
+      _loadProgress();
     });
   }
 
   void _nextMonth() {
     setState(() {
-      _selectedMonth = "March"; // Placeholder for actual month logic
+      if (_monthIndex < _months.length - 1) _monthIndex++;
+      _selectedMonth = _months[_monthIndex];
+      _loadProgress();
     });
   }
 
@@ -30,10 +59,10 @@ class _ToDoProgressState extends State<ToDoProgress> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("My Progress", style: TextStyle(color: Colors.black)),
+        title: const Text("My Progress", style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.purple[200],
         centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.black), // Makes back button black
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -45,20 +74,20 @@ class _ToDoProgressState extends State<ToDoProgress> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(Icons.arrow_left, color: Colors.purple),
+                  icon: const Icon(Icons.arrow_left, color: Colors.purple),
                   onPressed: _previousMonth,
                 ),
                 Text(
                   _selectedMonth,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
                 ),
                 IconButton(
-                  icon: Icon(Icons.arrow_right, color: Colors.purple),
+                  icon: const Icon(Icons.arrow_right, color: Colors.purple),
                   onPressed: _nextMonth,
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Circular Progress Indicator
             Stack(
@@ -71,30 +100,30 @@ class _ToDoProgressState extends State<ToDoProgress> {
                     value: _currentProgress / _goal,
                     strokeWidth: 8,
                     backgroundColor: Colors.purple[100],
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.purple),
                   ),
                 ),
                 Text(
                   "$_currentProgress/$_goal",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-            // "Habits Completed" Button
+            // "Tasks Completed" Button
             Container(
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
               decoration: BoxDecoration(
                 color: Colors.purple[200],
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Text(
-                "Habits Completed",
+              child: const Text(
+                "Tasks Completed",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Action Buttons
             _buildActionsButton("Share", Icons.share, () {
@@ -102,11 +131,11 @@ class _ToDoProgressState extends State<ToDoProgress> {
             }),
             _buildActionsButton("Home", Icons.home, () {
               Navigator.pushReplacement(
-                  context, MaterialPageRoute(builder: (context) => MainMenu())); // Path to Home
+                  context, MaterialPageRoute(builder: (context) => const MainMenu()));
             }),
             _buildActionsButton("Account", Icons.person, () {
               Navigator.pushReplacement(
-                  context, MaterialPageRoute(builder: (context) => Account())); // Path to Account
+                  context, MaterialPageRoute(builder: (context) => const Account()));
             }),
           ],
         ),
@@ -120,10 +149,10 @@ class _ToDoProgressState extends State<ToDoProgress> {
       child: OutlinedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon, color: Colors.purple),
-        label: Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+        label: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.purple),
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+          side: const BorderSide(color: Colors.purple),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
         ),
       ),
     );

@@ -19,7 +19,7 @@ class _HabitListState extends State<HabitList> {
     "All Days", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
   ];
 
-  final dbHelper = Database.instance;
+  final dbHelper = DatabaseHelper.instance; // Use DatabaseHelper instance
   List<Map<String, dynamic>> habits = [];
 
   @override
@@ -37,8 +37,8 @@ class _HabitListState extends State<HabitList> {
   }
 
   void _deleteHabit(int id) async {
-    await dbHelper.deleteHabit(id); _loadHabits();
-    _loadHabits();
+    await dbHelper.deleteHabit(id);
+    _loadHabits(); // Reload habits after deletion
   }
 
   @override
@@ -62,7 +62,8 @@ class _HabitListState extends State<HabitList> {
                 ),
               ),
               onPressed: () {
-                Navigator.push(context,
+                // Navigate to HabitProgress screen
+                Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const HabitProgress()),
                 );
@@ -74,6 +75,7 @@ class _HabitListState extends State<HabitList> {
       ),
       body: Column(
         children: [
+          // Day filter chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -98,14 +100,16 @@ class _HabitListState extends State<HabitList> {
             ),
           ),
           const SizedBox(height: 10),
+          // Habit list
           Expanded(
             child: habits.isEmpty
               ? const Center(child: Text('No habits added yet!'))
-              : ListView.builder(itemCount: habits.length, physics: const BouncingScrollPhysics(),
+              : ListView.builder(
+                  physics: const BouncingScrollPhysics(),
                   itemCount: habits.length,
                   itemBuilder: (context, index) {
-                    return HabitCard(habitName: habits[index]['habit_name'] ?? 'Unnamed Habit',
-                      habitName: habits[index]['habit_name'],
+                    return HabitCard(
+                      habitName: habits[index]['title'] ?? 'Unnamed Habit', // Use 'title'
                       frequency: habits[index]['frequency'],
                       onDelete: () => _deleteHabit(habits[index]['id']),
                     );
@@ -125,6 +129,7 @@ class _HabitListState extends State<HabitList> {
                 icon: Icons.home,
                 label: "Home",
                 onPressed: () {
+                  // Navigate to MainMenu screen
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const MainMenu()),
@@ -135,6 +140,7 @@ class _HabitListState extends State<HabitList> {
                 icon: Icons.add,
                 label: "Add",
                 onPressed: () {
+                  // Navigate to NewHabit screen and reload habits on return
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => NewHabit(userId: widget.userId)),
@@ -145,6 +151,7 @@ class _HabitListState extends State<HabitList> {
                 icon: Icons.account_circle,
                 label: "Account",
                 onPressed: () {
+                  // Navigate to Account screen
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const Account()),

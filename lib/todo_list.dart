@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'database.dart';
 import 'account.dart';
+import 'database.dart';
 import 'main_menu.dart';
 import 'new_todo.dart';
 import 'todo_progress.dart';
@@ -25,8 +25,18 @@ class _ToDoListState extends State<ToDoList> {
 
   Future<void> _loadTasks() async {
     final data = await DatabaseHelper.instance.getTasks();
+
+    List<Map<String, dynamic>> filteredTasks;
+    if (selectedFilterIndex == 1) {
+      filteredTasks = data.where((task) => task['priority'] == 'High').toList();
+    } else if (selectedFilterIndex == 2) {
+      filteredTasks = data.where((task) => task['priority'] == 'Low').toList();
+    } else {
+      filteredTasks = data;
+    }
+
     setState(() {
-      tasks = data;
+      tasks = filteredTasks;
     });
   }
 
@@ -45,96 +55,112 @@ class _ToDoListState extends State<ToDoList> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("To-Do List", style: TextStyle(color: Colors.black)),
+        title: const Text("To-Do List", style: TextStyle(color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.purple[200],
         elevation: 0,
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.only(right: 10),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.purple,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: Colors.purple, width: 2),
+                  side: const BorderSide(color: Colors.purple, width: 2),
                 ),
               ),
               onPressed: () {
-                 Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ToDoProgress()),
-                  );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ToDoProgress()),
+                );
               },
-              child: Text("My Progress"),
+              child: const Text("My Progress"),
             ),
           ),
         ],
       ),
       body: Column(
         children: [
+          // Filter Chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: List.generate(filters.length, (index) {
                 return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: ChoiceChip(
                     label: Text(filters[index]),
                     selected: selectedFilterIndex == index,
                     onSelected: (bool selected) {
                       setState(() {
                         selectedFilterIndex = index;
+                        _loadTasks();
                       });
                     },
                     selectedColor: Colors.white,
                     backgroundColor: Colors.grey[200],
-                    labelStyle: TextStyle(color: Colors.black),
+                    labelStyle: const TextStyle(color: Colors.black),
                   ),
                 );
               }),
             ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
+
+          // Task List
           Expanded(
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.purple, width: 2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: ListView.builder(
-                itemCount: tasks.length,
-                itemBuilder: (context, index) {
-                  final task = tasks[index];
-                  return ListTile(
-                    leading: Checkbox(
-                      value: task['isCompleted'] == 1,
-                      activeColor: Colors.purple,
-                      onChanged: (bool? value) {
-                        _toggleTaskCompletion(task['id'], value ?? false);
-                      },
-                    ),
-                    title: Text(task['title'], style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(task['description']),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.black),
-                      onPressed: () {
-                        _deleteTask(task['id']); 
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
+            child: tasks.isEmpty
+                ? const Center(child: Text('No tasks yet!'))
+                : ListView.builder(
+                    itemCount: tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = tasks[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: const BorderSide(color: Colors.purple, width: 2),
+                        ),
+                        child: ListTile(
+                          leading: Checkbox(
+                            value: task['isCompleted'] == 1,
+                            activeColor: Colors.purple,
+                            onChanged: (bool? value) {
+                              _toggleTaskCompletion(task['id'], value ?? false);
+                            },
+                          ),
+                          title: Text(
+                            task['description'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              decoration: task['isCompleted'] == 1
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                            ),
+                          ),
+                          subtitle: Text("Priority: ${task['priority']}"),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.black),
+                            onPressed: () {
+                              _deleteTask(task['id']);
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
+
+      // Bottom Navigation
       bottomNavigationBar: BottomAppBar(
         color: Colors.purple[200],
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -144,7 +170,7 @@ class _ToDoListState extends State<ToDoList> {
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => MainMenu()),
+                    MaterialPageRoute(builder: (context) => const MainMenu()),
                   );
                 },
               ),
@@ -152,12 +178,13 @@ class _ToDoListState extends State<ToDoList> {
                 icon: Icons.add,
                 label: "Add",
                 onPressed: () async {
-                  final newTaskId = await Navigator.push(
+                  final newTaskAdded = await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => NewToDo()),
+                    MaterialPageRoute(builder: (context) => const NewToDo()),
                   );
-                  if (newTaskId != null) {
-                    _loadTasks();
+
+                  if (newTaskAdded == true) {
+                    _loadTasks(); // Reload the list after adding a task
                   }
                 },
               ),
@@ -167,13 +194,44 @@ class _ToDoListState extends State<ToDoList> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => Account()),
+                    MaterialPageRoute(builder: (context) => const Account()),
                   );
                 },
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Reusable Bottom Navigation Button
+class BottomNavButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const BottomNavButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 60,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: Icon(icon, size: 28, color: Colors.black),
+            onPressed: onPressed,
+          ),
+          Text(label, style: const TextStyle(fontSize: 14, color: Colors.black)),
+        ],
       ),
     );
   }

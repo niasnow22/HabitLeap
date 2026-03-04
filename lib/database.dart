@@ -2,9 +2,6 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -18,20 +15,15 @@ class DatabaseHelper {
     return _database!;
   }
 
-  Future<Database> _initDB(String fileName) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final path = join(directory.path, fileName);
+  Future<Database> _initDB(String filePath) async {
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    final path = join(documentsDirectory.path, filePath);
 
     return await openDatabase(
       path,
-      version: 2, // Updated version number
+      version: 3, // Increment version for new columns
       onCreate: _createDB,
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute("DROP TABLE IF EXISTS users");
-          await _createDB(db, newVersion);
-        }
-      },
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -39,44 +31,115 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL UNIQUE,
+        username TEXT NOT NULL,
         password TEXT NOT NULL
-      )
+      );
+    ''');
+
+    await db.execute('''
+      CREATE TABLE habits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        frequency TEXT NOT NULL,
+        day TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE TABLE tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        description TEXT NOT NULL,
+        date TEXT NOT NULL,
+        time TEXT NOT NULL,
+        priority TEXT NOT NULL,
+        isCompleted INTEGER DEFAULT 0
+      );
     ''');
   }
 
-  String _hashPassword(String password) {
-    return sha256.convert(utf8.encode(password)).toString();
+  // Handle database upgrades
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 3) {
+      await db.execute("ALTER TABLE tasks ADD COLUMN isCompleted INTEGER DEFAULT 0");
+    }
   }
 
-  Future<int> insertUser(String username, String password) async {
+  // --- USER FUNCTIONS ---
+  Future<int> createUser(String username, String password) async {
     final db = await database;
-    final hashedPassword = _hashPassword(password);
-    return await db.insert(
-      'users',
-      {'username': username, 'password': hashedPassword},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    return await db.insert('users', {
+      'username': username,
+      'password': password,
+    });
   }
 
-  Future<bool> authenticateUser(String username, String password) async {
-    final db = await database;
-    final hashedPassword = _hashPassword(password);
-    final result = await db.query(
-      'users',
-      where: 'username = ? AND password = ?',
-      whereArgs: [username, hashedPassword],
-    );
-    return result.isNotEmpty;
-  }
-
-  Future<List<Map<String, dynamic>>> fetchUsers() async {
+  Future<List<Map<String, dynamic>>> getUsers() async {
     final db = await database;
     return await db.query('users');
   }
 
-  Future<void> close() async {
+  // --- HABIT FUNCTIONS ---
+  Future<int> addHabit(int userId, String title, String description, String frequency, String day) async {
     final db = await database;
-    await db.close(); // Ensuring database closure is awaited
+    return await db.insert('habits', {
+      'user_id': userId,
+      'title': title,
+      'description': description,
+      'frequency': frequency,
+      'day': day,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> fetchHabits(int userId, {String dayFilter = "All Days"}) async {
+    final db = await database;
+
+    if (dayFilter == "All Days") {
+      return await db.query('habits', where: 'user_id = ?', whereArgs: [userId]);
+    }
+
+    return await db.query('habits', where: 'user_id = ? AND day = ?', whereArgs: [userId, dayFilter]);
+  }
+
+  Future<int> deleteHabit(int id) async {
+    final db = await database;
+    return await db.delete('habits', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --- TASK FUNCTIONS ---
+  Future<int> insertTask(String description, String date, String time, String priority, {bool isCompleted = false}) async {
+    final db = await database;
+    return await db.insert(
+      'tasks',
+      {
+        'description': description,
+        'date': date,
+        'time': time,
+        'priority': priority,
+        'isCompleted': isCompleted ? 1 : 0, // Store as INTEGER (1 = completed, 0 = not completed)
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace, // Prevent duplicate errors
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getTasks() async {
+    final db = await database;
+    return await db.query('tasks');
+  }
+
+  Future<int> deleteTask(int id) async {
+    final db = await database;
+    return await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> updateTask(int id, bool isCompleted) async {
+    final db = await database;
+    return await db.update(
+      'tasks',
+      {'isCompleted': isCompleted ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }

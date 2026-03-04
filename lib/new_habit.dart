@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'database.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 import 'habit_list.dart';
 
 class NewHabit extends StatefulWidget {
-  const NewHabit({super.key});
+  final int userId;
+
+  const NewHabit({super.key, required this.userId});
 
   @override
   _NewHabitState createState() => _NewHabitState();
@@ -13,15 +16,23 @@ class _NewHabitState extends State<NewHabit> {
   final TextEditingController afterController = TextEditingController();
   final TextEditingController willController = TextEditingController();
   int selectedDay = 0;
-  final List<String> days = ['AllDays', "Monday", 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  final List<String> days = [
+    'All Days',
+    "Monday",
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ];
 
   Future<Database> getDatabase() async {
     return openDatabase(
-      join(await getDatabasesPath(), 'habits.db'), // Fixed function name
+      join(await getDatabasesPath(), 'habits.db'),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE habits(id INTEGER PRIMARY KEY AUTOINCREMENT, after TEXT, will TEXT, day TEXT)'
-        );
+            'CREATE TABLE habits(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, after TEXT, will TEXT, day TEXT)');
       },
       version: 1,
     );
@@ -32,9 +43,10 @@ class _NewHabitState extends State<NewHabit> {
     await db.insert(
       'habits',
       {
+        'user_id': widget.userId,
         'after': afterController.text,
         'will': willController.text,
-        'day': days[selectedDay] // Fixed variable name
+        'day': days[selectedDay]
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -62,7 +74,7 @@ class _NewHabitState extends State<NewHabit> {
                 ),
               ),
               onPressed: () {
-                Navigator.pop(context); // Fixed function name
+                Navigator.pop(context);
               },
               child: Text('Cancel'),
             ),
@@ -74,7 +86,8 @@ class _NewHabitState extends State<NewHabit> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('After I,', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('After I,',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 5),
             TextField(
               controller: afterController,
@@ -88,7 +101,8 @@ class _NewHabitState extends State<NewHabit> {
               ),
             ),
             SizedBox(height: 20),
-            Text("I will,", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("I will,",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 5),
             TextField(
               controller: willController,
@@ -102,7 +116,8 @@ class _NewHabitState extends State<NewHabit> {
               ),
             ),
             SizedBox(height: 20),
-            Text("What days do you need to be reminded?", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text("What days do you need to be reminded?",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             Divider(color: Colors.black),
             SizedBox(height: 10),
             SingleChildScrollView(
@@ -113,10 +128,10 @@ class _NewHabitState extends State<NewHabit> {
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     child: ChoiceChip(
                       label: Text(days[index]),
-                      selected: selectedDay == index, // Fixed variable name
+                      selected: selectedDay == index,
                       onSelected: (bool selected) {
                         setState(() {
-                          selectedDay = index; // Fixed syntax
+                          selectedDay = index;
                         });
                       },
                       selectedColor: Colors.lightBlue[100],
@@ -138,16 +153,21 @@ class _NewHabitState extends State<NewHabit> {
                   backgroundColor: Colors.lightBlue[200],
                   foregroundColor: Colors.black,
                   padding: EdgeInsets.symmetric(vertical: 14, horizontal: 40),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 icon: Icon(Icons.check_box, color: Colors.black),
                 label: Text("Done", style: TextStyle(fontSize: 18)),
                 onPressed: () async {
-                  if (afterController.text.isNotEmpty && willController.text.isNotEmpty) {
+                  if (afterController.text.isNotEmpty &&
+                      willController.text.isNotEmpty) {
                     await addHabit();
+                    // Navigate back to HabitList and refresh the list
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => HabitList()),
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              HabitList(userId: widget.userId)),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(

@@ -15,7 +15,7 @@ class _MainMenuState extends State<MainMenu> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Welcome!"),
+        title: const Text("Welcome!"),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -33,7 +33,7 @@ class _MainMenuState extends State<MainMenu> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HabitList()),
+                  MaterialPageRoute(builder: (context) => const HabitList(userId: 1)), // Assuming userId is 1
                 );
               },
             ),
@@ -47,7 +47,7 @@ class _MainMenuState extends State<MainMenu> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ToDoList()),
+                  MaterialPageRoute(builder: (context) => const ToDoList()),
                 );
               },
             ),
@@ -61,7 +61,7 @@ class _MainMenuState extends State<MainMenu> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Account()),
+                  MaterialPageRoute(builder: (context) => const Account()),
                 );
               },
             ),
@@ -79,7 +79,8 @@ class MenuButton extends StatelessWidget {
   final Color borderColor;
   final VoidCallback onPressed;
 
-  const MenuButton({super.key, 
+  const MenuButton({
+    super.key,
     required this.label,
     required this.color,
     required this.borderColor,
@@ -92,7 +93,7 @@ class MenuButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.black,
-        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
           side: BorderSide(color: borderColor, width: 2),
@@ -101,7 +102,7 @@ class MenuButton extends StatelessWidget {
       onPressed: onPressed,
       child: Text(
         label,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
