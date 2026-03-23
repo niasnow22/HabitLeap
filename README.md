@@ -35,7 +35,8 @@ HabitLeap is a cross-platform habit tracking app built with Flutter that helps u
 
 ## 📸 Screenshots
 
-![Login Screen](screenshots/habitleap-login.png)
-![Main Menu](screenshots/habitleap-mainmenu.png)
-![Habit Page](screenshots/habitleap-page.png)
+![Login Screen](lib/screenshots/habitleap-login.png)
+![Main Menu](lib/screenshots/habitleap-mainmenu.png)
+![Habit Page](lib/screenshots/habitleap-page.png)
+
 
