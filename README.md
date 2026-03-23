@@ -1,17 +1,41 @@
-# habit_leap
+# 📈 HabitLeap – Habit Tracking App
 
-A new Flutter project.
+HabitLeap is a cross-platform habit tracking app built with Flutter that helps users build and maintain daily habits.
 
-## Getting Started
+## 🚀 Features
+- Create and manage habits
+- Track completion status daily
+- View habit progress and statistics
+- Filter habits by day or category
+- Persistent data storage using Sembast
 
-This project is a starting point for a Flutter application.
+## 🛠️ Tech Stack
+- Flutter & Dart
+- Sembast (cross-platform database)
+- Clean UI focused on usability
+- Local data persistence
 
-A few resources to get you started if this is your first Flutter project:
+## 📱 Screens
+- Dashboard (habit overview)
+- Add Habit
+- Daily Tracking
+- Progress View
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 💡 What I Learned
+- Structuring a scalable Flutter app
+- Designing user-friendly interfaces
+- Working with local databases (Sembast)
+- Implementing CRUD operations efficiently
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-## test
+## 🔗 Future Improvements
+- Notifications/reminders
+- Cloud sync
+- User accounts
+- Data visualization improvements
+
+## 📸 Screenshots
+
+![Login Screen](screenshots/habitleap-login.png)
+![Main Menu](screenshots/habitleap-mainmenu.png)
+![Habit Page](screenshots/habitleap-page.png)
+
